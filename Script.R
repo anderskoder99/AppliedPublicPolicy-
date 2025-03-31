@@ -397,6 +397,44 @@ ggplot(event_study_df_tabtarbejde, aes(x = event_time, y = att)) +
   ) +
   theme_minimal() 
 
+# 5.7 Ydelseslængde -------------------------------------------------
+
+att_gt_results_ydelseslængde <- att_gt(
+  yname = "ydelseslængde_dage",
+  tname = "time",
+  idname = "SkoledistriktID",
+  gname = "G",
+  data = data,,
+  panel = FALSE
+  
+)
+
+agg_dynamic_ydelseslængde <- aggte(att_gt_results_ydelseslængde, type = "dynamic")
+summary(agg_dynamic_ydelseslængde)
+
+#Plottet:
+
+event_study_df_ydelseslængde <- tibble(
+  event_time = agg_dynamic_ydelseslængde$egt,
+  att = agg_dynamic_ydelseslængde$att.egt,
+  se = agg_dynamic_ydelseslængde$se.egt,
+  ci_low = att - 1.96 * se,
+  ci_high = att + 1.96 * se
+)
+
+ggplot(event_study_df_ydelseslængde, aes(x = event_time, y = att)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.2) +
+  geom_vline(xintercept = -0, linetype = "dashed", color = "gray40") +  # pre-treatment baseline
+  labs(
+    title = "Dynamisk DiD: Effekter relativt til behandlingstidspunkt",
+    x = "Tid relativt til treatment",
+    y = "ATT (gennemsnitlig effekt)"
+  ) +
+  theme_minimal() 
+
 #PLAN__________________________________________________________________________________
 
 #1. Færdiggør rens  
