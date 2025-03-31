@@ -309,6 +309,51 @@ ggplot(event_study_df_forebyggende, aes(x = event_time, y = att)) +
   ) +
   theme_minimal() 
 
+# 5.5 Støttende indsatser -------------------------------------------------
+
+data <- data |> 
+  mutate(
+    støttende_dummy = if_else(Ydelsesgruppering_DW == "Støttende indsats (forebyggende)", 1, 0)
+  )
+
+
+att_gt_results_støttende <- att_gt(
+  yname = "støttende_dummy",
+  tname = "time",
+  idname = "SkoledistriktID",
+  gname = "G",
+  data = data,,
+  panel = FALSE
+  
+)
+
+agg_dynamic_støttende <- aggte(att_gt_results_støttende, type = "dynamic")
+summary(agg_dynamic_støttende)
+
+#Plottet:
+
+event_study_df_støttende <- tibble(
+  event_time = agg_dynamic_støttende$egt,
+  att = agg_dynamic_støttende$att.egt,
+  se = agg_dynamic_støttende$se.egt,
+  ci_low = att - 1.96 * se,
+  ci_high = att + 1.96 * se
+)
+
+ggplot(event_study_df_støttende, aes(x = event_time, y = att)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.2) +
+  geom_vline(xintercept = -0, linetype = "dashed", color = "gray40") +  # pre-treatment baseline
+  labs(
+    title = "Dynamisk DiD: Effekter relativt til behandlingstidspunkt",
+    x = "Tid relativt til treatment",
+    y = "ATT (gennemsnitlig effekt)"
+  ) +
+  theme_minimal() 
+
+
 #PLAN__________________________________________________________________________________
 
 #1. Færdiggør rens  
