@@ -152,6 +152,159 @@ data <- data |>
 sum(data$treatment == 1 & data$Periode_DW == "Ikke-indrullet")
 
 
+# 5.0 Callaway-modeller -------------------------------------------------------
+
+
+# 5.1 Forberedelse --------------------------------------------------------
+
+#Tidsvariabel -  vi skaber en numerisk tidsvariabe til modellen
+data <- data |> 
+  mutate(
+    time = case_when(
+      str_detect(Halvår_DW, "Forår")  ~ as.numeric(str_extract(Halvår_DW, "\\d+")),         # Fx "Forår2019" → 2019.0
+      str_detect(Halvår_DW, "Efterår") ~ as.numeric(str_extract(Halvår_DW, "\\d+")) + 0.5   # Fx "Efterår2019" → 2019.5
+    )
+  )
+
+#Vi skaber en treatment variabel til modellen, der passer hvert udrul og tidsvariablen ovenfor
+data <- data |> 
+  mutate(
+    G = case_when(
+      Udrulning_DW == "Udrul_1" ~ 2023.0,
+      Udrulning_DW == "Udrul_2" ~ 2023.5,
+      Udrulning_DW == "Udrul_3" ~ 2024.0,
+      Udrulning_DW == "Udrul_4" ~ 2024.5,
+      Udrulning_DW == "Udrul_5" ~ NA_real_  # or 0 if you prefer to keep them as never-treated controls
+    )
+  )
+
+data <- data |> 
+  mutate(
+    G = if_else(is.na(G), 0, G)  # Replace NA with 0 for never-treated units
+  )
+
+
+# 5.2 Fraværsmodellen  ----------------------------------------------------
+#Modellen  
+att_gt_results <- att_gt(
+  yname = "Fraværsprocent",
+  tname = "time",
+  idname = "SkoledistriktID",
+  gname = "G",
+  data = data,,
+  panel = FALSE
+
+)
+
+agg_dynamic <- aggte(att_gt_results, type = "dynamic")
+summary(agg_dynamic)
+plot(agg_dynamic)
+
+#Plottet:
+
+event_study_df <- tibble(
+  event_time = agg_dynamic$egt,
+  att = agg_dynamic$att.egt,
+  se = agg_dynamic$se.egt,
+  ci_low = att - 1.96 * se,
+  ci_high = att + 1.96 * se
+)
+
+ggplot(event_study_df, aes(x = event_time, y = att)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.2) +
+  geom_vline(xintercept = -1, linetype = "dashed", color = "gray40") +  # pre-treatment baseline
+  labs(
+    title = "Dynamisk DiD: Effekter relativt til behandlingstidspunkt",
+    x = "Tid relativt til treatment",
+    y = "ATT (gennemsnitlig effekt)"
+  ) +
+  theme_minimal()
+
+
+
+# 5.3 Antal Underretninger ------------------------------------------------
+att_gt_results_underretninger <- att_gt(
+  yname = "Underretning_DW",
+  tname = "time",
+  idname = "SkoledistriktID",
+  gname = "G",
+  data = data,,
+  panel = FALSE
+  
+)
+
+agg_dynamic_underretninger <- aggte(att_gt_results_underretninger, type = "dynamic")
+summary(agg_dynamic_underretninger)
+
+#Plottet:
+
+event_study_df_underretninger <- tibble(
+  event_time = agg_dynamic_underretninger$egt,
+  att = agg_dynamic_underretninger$att.egt,
+  se = agg_dynamic_underretninger$se.egt,
+  ci_low = att - 1.96 * se,
+  ci_high = att + 1.96 * se
+)
+
+ggplot(event_study_df_underretninger, aes(x = event_time, y = att)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.2) +
+  geom_vline(xintercept = -0, linetype = "dashed", color = "gray40") +  # pre-treatment baseline
+  labs(
+    title = "Dynamisk DiD: Effekter relativt til behandlingstidspunkt",
+    x = "Tid relativt til treatment",
+    y = "ATT (gennemsnitlig effekt)"
+  ) +
+  theme_minimal()
+
+
+# 5.4 Ydelsesgruppering  --------------------------------------------------
+data <- data |> 
+  mutate(
+    forebyggende_dummy = if_else(Ydelsesgruppering_DW == "Tidligt forebyggende indsatser", 1, 0)
+  )
+
+
+att_gt_results_forebyggende <- att_gt(
+  yname = "forebyggende_dummy",
+  tname = "time",
+  idname = "SkoledistriktID",
+  gname = "G",
+  data = data,,
+  panel = FALSE
+  
+)
+
+agg_dynamic_forebyggende <- aggte(att_gt_results_forebyggende, type = "dynamic")
+summary(agg_dynamic_forebyggende)
+
+#Plottet:
+
+event_study_df_forebyggende <- tibble(
+  event_time = agg_dynamic_forebyggende$egt,
+  att = agg_dynamic_forebyggende$att.egt,
+  se = agg_dynamic_forebyggende$se.egt,
+  ci_low = att - 1.96 * se,
+  ci_high = att + 1.96 * se
+)
+
+ggplot(event_study_df_forebyggende, aes(x = event_time, y = att)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.2) +
+  geom_vline(xintercept = -0, linetype = "dashed", color = "gray40") +  # pre-treatment baseline
+  labs(
+    title = "Dynamisk DiD: Effekter relativt til behandlingstidspunkt",
+    x = "Tid relativt til treatment",
+    y = "ATT (gennemsnitlig effekt)"
+  ) +
+  theme_minimal() 
 
 #PLAN__________________________________________________________________________________
 
