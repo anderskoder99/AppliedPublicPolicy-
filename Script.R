@@ -435,6 +435,52 @@ ggplot(event_study_df_ydelseslængde, aes(x = event_time, y = att)) +
   ) +
   theme_minimal() 
 
+# 5.8 Farvekode -------------------------------------------------
+#Lav numerisk variabel, der tager værdi 1:3 for Grøn, Gul og Rød. 
+data <- data %>%
+  mutate(Farvekode_num = case_when(
+    Farvekode_DW == "Grøn" ~ 1,
+    Farvekode_DW == "Gul"  ~ 2,
+    Farvekode_DW == "Rød"  ~ 3,
+    TRUE ~ NA_real_  # Beholder NA for alle andre værdier
+  ))
+
+att_gt_results_farvekode <- att_gt(
+  yname = "Farvekode_num",
+  tname = "time",
+  idname = "SkoledistriktID",
+  gname = "G",
+  data = data,,
+  panel = FALSE
+  
+)
+
+agg_dynamic_farvekode <- aggte(att_gt_results_farvekode, type = "dynamic")
+summary(agg_dynamic_farvekode)
+
+#Plottet:
+
+event_study_df_farvekode <- tibble(
+  event_time = agg_dynamic_farvekode$egt,
+  att = agg_dynamic_farvekode$att.egt,
+  se = agg_dynamic_farvekode$se.egt,
+  ci_low = att - 1.96 * se,
+  ci_high = att + 1.96 * se
+)
+
+ggplot(event_study_df_farvekode, aes(x = event_time, y = att)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.2) +
+  geom_vline(xintercept = -0, linetype = "dashed", color = "gray40") +  # pre-treatment baseline
+  labs(
+    title = "Dynamisk DiD: Effekter relativt til behandlingstidspunkt",
+    x = "Tid relativt til treatment",
+    y = "ATT (gennemsnitlig effekt)"
+  ) +
+  theme_minimal() 
+
 #PLAN__________________________________________________________________________________
 
 #1. Færdiggør rens  
