@@ -12,6 +12,7 @@ install.packages("readxl") #Installerer pakken readxl
 install.packages("here") #Installerer pakken here
 install.packages("tidyverse") #Installerer pakken tidyverse
 install.packages("panelView")
+install.packages("did")
 
 # 2. Indlæs data -------------------------------------------------------------
 
@@ -23,6 +24,7 @@ library(readxl) #Bruges til at indlæse data i excel-form
 library(here) #Bruges til at skabe en relative path til data
 library(tidyverse) 
 library(panelView)
+library(did) #Bruges til Dif-inDif
 
 View(data) #Viser data i R-studio for at tjekke at det blev loaded korrekt
 
@@ -34,6 +36,11 @@ unique(data$Udrulning_DW) #Viser unikke værdier i kolonnen "Udrulning_DW"
 sum(data$Udrulning_DW == "Udenfor distrikt") #580 rækker har denne værdi
 data <- data[data$Udrulning_DW != "Udenfor distrikt", ] #Fjerner rækker med denne værdi
 unique(data$Ydelse) #OBS på denne: 260 unikke værdier - skal vi gruppere?
+data %>% 
+  count(YdelseDatoStop == "9999-12-31") #79494 ydelser er stadig aktive pr. 31/1-25
+data <- data %>% 
+  mutate(YdelseDatoStopNy = if_else(YdelseDatoStop == as.Date("9999-12-31"), NA, YdelseDatoStop))
+
 
 #Ændrer alle NULL-værdier til NA, fjerner omkring hlavdelen af rækker
 data$Fraværsprocent[data$Fraværsprocent == "NULL"] <- NA
@@ -75,8 +82,7 @@ data <- data %>%
 
 
 # Lav variabel for længde af ydelse 
-data$ydelseslængde_dage <- as.Date(data$YdelseDatoStop) - as.Date(data$YdelseDatoStart)
-
+data$ydelseslængde_dage <- as.Date(data$YdelseDatoStopNy) - as.Date(data$YdelseDatoStart)
 
 str(data$Fraværsprocent)
 
