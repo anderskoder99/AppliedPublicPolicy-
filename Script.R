@@ -185,7 +185,7 @@ data <- data |>
 
 #Oprette unikt ID til skoledistrikterne
 data <- data %>% 
-  mutate(SkoledistriktID = as.factor(SkoledistriktNavn))
+  mutate(SkoledistriktID = as.numeric(factor(SkoledistriktNavn)))
 
 # 5.2 Fraværsmodellen  ----------------------------------------------------
 #Modellen  
