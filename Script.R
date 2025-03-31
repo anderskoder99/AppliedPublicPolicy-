@@ -353,6 +353,49 @@ ggplot(event_study_df_støttende, aes(x = event_time, y = att)) +
   ) +
   theme_minimal() 
 
+# 5.6 Tabt arbejdsfortjeneste -------------------------------------------------
+
+data <- data |> 
+  mutate(
+    tabtarbejde_dummy = if_else(Ydelse == "#§ 42 Tabt arbejdsfortjeneste", 1, 0)
+  )
+
+
+att_gt_results_tabtarbejde <- att_gt(
+  yname = "tabtarbejde_dummy",
+  tname = "time",
+  idname = "SkoledistriktID",
+  gname = "G",
+  data = data,,
+  panel = FALSE
+  
+)
+
+agg_dynamic_tabtarbejde <- aggte(att_gt_results_tabtarbejde, type = "dynamic")
+summary(agg_dynamic_tabtarbejde)
+
+#Plottet:
+
+event_study_df_tabtarbejde <- tibble(
+  event_time = agg_dynamic_tabtarbejde$egt,
+  att = agg_dynamic_tabtarbejde$att.egt,
+  se = agg_dynamic_tabtarbejde$se.egt,
+  ci_low = att - 1.96 * se,
+  ci_high = att + 1.96 * se
+)
+
+ggplot(event_study_df_tabtarbejde, aes(x = event_time, y = att)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.2) +
+  geom_vline(xintercept = -0, linetype = "dashed", color = "gray40") +  # pre-treatment baseline
+  labs(
+    title = "Dynamisk DiD: Effekter relativt til behandlingstidspunkt",
+    x = "Tid relativt til treatment",
+    y = "ATT (gennemsnitlig effekt)"
+  ) +
+  theme_minimal() 
 
 #PLAN__________________________________________________________________________________
 
