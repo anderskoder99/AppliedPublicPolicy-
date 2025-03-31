@@ -226,7 +226,7 @@ ggplot(event_study_df, aes(x = event_time, y = att)) +
   ) +
   theme_minimal()
 
-
+ggsave("event_fravaer.png", plot = event_fravær, width = 8, height = 5, dpi = 300)
 
 # 5.3 Antal Underretninger ------------------------------------------------
 att_gt_results_underretninger <- att_gt(
@@ -264,6 +264,9 @@ ggplot(event_study_df_underretninger, aes(x = event_time, y = att)) +
     y = "ATT (gennemsnitlig effekt)"
   ) +
   theme_minimal()
+
+ggsave("event_underretninger.png", plot = event_underretninger, width = 8, height = 5, dpi = 300)
+
 
 
 # 5.4 Ydelsesgruppering  --------------------------------------------------
@@ -309,6 +312,9 @@ ggplot(event_study_df_forebyggende, aes(x = event_time, y = att)) +
   ) +
   theme_minimal() 
 
+ggsave("event_forebyggende.png", plot = event_forebyggende, width = 8, height = 5, dpi = 300)
+
+
 # 5.5 Støttende indsatser -------------------------------------------------
 
 data <- data |> 
@@ -352,6 +358,8 @@ ggplot(event_study_df_støttende, aes(x = event_time, y = att)) +
     y = "ATT (gennemsnitlig effekt)"
   ) +
   theme_minimal() 
+
+ggsave("event_støttende.png", plot = event_støttende, width = 8, height = 5, dpi = 300)
 
 # 5.6 Tabt arbejdsfortjeneste -------------------------------------------------
 
@@ -397,6 +405,9 @@ ggplot(event_study_df_tabtarbejde, aes(x = event_time, y = att)) +
   ) +
   theme_minimal() 
 
+ggsave("event_tabtarbejde.png", plot = event_tabtarbejde, width = 8, height = 5, dpi = 300)
+
+
 # 5.7 Ydelseslængde -------------------------------------------------
 
 att_gt_results_ydelseslængde <- att_gt(
@@ -434,6 +445,8 @@ ggplot(event_study_df_ydelseslængde, aes(x = event_time, y = att)) +
     y = "ATT (gennemsnitlig effekt)"
   ) +
   theme_minimal() 
+
+ggsave("event_ydelseslængde.png", plot = event_ydelseslængde, width = 8, height = 5, dpi = 300)
 
 # 5.8 Farvekode -------------------------------------------------
 #Lav numerisk variabel, der tager værdi 1:3 for Grøn, Gul og Rød. 
@@ -480,6 +493,116 @@ ggplot(event_study_df_farvekode, aes(x = event_time, y = att)) +
     y = "ATT (gennemsnitlig effekt)"
   ) +
   theme_minimal() 
+
+###############HETEROGENITET###########
+
+data_male <- data |> 
+  filter(Køn == "Mand")
+
+# Run the model on male students only
+att_gt_results_underretninger_male <- att_gt(
+  yname = "Underretning_DW",
+  tname = "time",
+  idname = "SkoledistriktID",
+  gname = "G",
+  data = data_male,
+  panel = FALSE
+)
+
+# Aggregate dynamic effects
+agg_dynamic_underretninger_male <- aggte(att_gt_results_underretninger_male, type = "dynamic")
+summary(agg_dynamic_underretninger_male)
+
+event_study_df_underretninger_male <- tibble(
+  event_time = agg_dynamic_underretninger_male$egt,
+  att = agg_dynamic_underretninger_male$att.egt,
+  se = agg_dynamic_underretninger_male$se.egt,
+  ci_low = att - 1.96 * se,
+  ci_high = att + 1.96 * se
+)
+
+event_underretninger_male <- ggplot(event_study_df_underretninger_male, aes(x = event_time, y = att)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.2) +
+  geom_vline(xintercept = -0, linetype = "dashed", color = "gray40") +  # pre-treatment baseline
+  labs(
+    title = "Dynamisk DiD: Effekter relativt til behandlingstidspunkt",
+    x = "Tid relativt til treatment",
+    y = "ATT (gennemsnitlig effekt)"
+  ) +
+  theme_minimal()
+
+#Kvinder
+data_kvinde <- data |> 
+  filter(Køn == "Kvinde")
+
+
+# Run the model on male students only
+att_gt_results_underretninger_kvinde <- att_gt(
+  yname = "Underretning_DW",
+  tname = "time",
+  idname = "SkoledistriktID",
+  gname = "G",
+  data = data_kvinde,
+  panel = FALSE
+)
+
+# Aggregate dynamic effects
+agg_dynamic_underretninger_kvinde <- aggte(att_gt_results_underretninger_kvinde, type = "dynamic")
+summary(agg_dynamic_underretninger_kvinde)
+
+
+event_study_df_underretninger_kvinde <- tibble(
+  event_time = agg_dynamic_underretninger_kvinde$egt,
+  att = agg_dynamic_underretninger_kvinde$att.egt,
+  se = agg_dynamic_underretninger_kvinde$se.egt,
+  ci_low = att - 1.96 * se,
+  ci_high = att + 1.96 * se
+)
+
+ggplot(event_study_df_underretninger_male, aes(x = event_time, y = att)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.2) +
+  geom_vline(xintercept = -0, linetype = "dashed", color = "gray40") +  # pre-treatment baseline
+  labs(
+    title = "Dynamisk DiD: Effekter relativt til behandlingstidspunkt",
+    x = "Tid relativt til treatment",
+    y = "ATT (gennemsnitlig effekt)"
+  ) +
+  theme_minimal()
+
+event_study_df_underretninger_male <- event_study_df_underretninger_male |>
+  mutate(køn = "Mand")
+
+event_study_df_underretninger_kvinde <- event_study_df_underretninger_kvinde |>
+  mutate(køn = "Kvinde")
+
+
+event_study_combined <- bind_rows(
+  event_study_df_underretninger_male,
+  event_study_df_underretninger_kvinde
+)
+
+library(ggplot2)
+
+ggplot(event_study_combined, aes(x = event_time, y = att, color = køn, fill = køn)) +
+  geom_line() +
+  geom_point() +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.2, position = position_dodge(width = 0.2)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") +
+  labs(
+    title = "Kønsopdelt Dynamisk DiD: Underretninger over tid",
+    x = "Tid relativt til behandling",
+    y = "ATT",
+    color = "Køn",
+    fill = "Køn"
+  ) +
+  theme_minimal()
 
 #PLAN__________________________________________________________________________________
 
