@@ -183,6 +183,9 @@ data <- data |>
     G = if_else(is.na(G), 0, G)  # Replace NA with 0 for never-treated units
   )
 
+#Oprette unikt ID til skoledistrikterne
+data <- data %>% 
+  mutate(SkoledistriktID = as.factor(SkoledistriktNavn))
 
 # 5.2 Fraværsmodellen  ----------------------------------------------------
 #Modellen  
