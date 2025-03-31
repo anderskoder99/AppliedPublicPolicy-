@@ -39,8 +39,8 @@ unique(data$Ydelse) #OBS på denne: 260 unikke værdier - skal vi gruppere?
 data$Fraværsprocent[data$Fraværsprocent == "NULL"] <- NA
 data$AntalFraværsdage[data$AntalFraværsdage == "NULL"] <- NA
 data$AntalSkoledage[data$AntalSkoledage == "NULL"] <- NA
-data$AntalSkoledage[data$YdelseDatoStart == "NULL"] <- NA
-data$AntalSkoledage[data$YdelseDatoStop == "NULL"] <- NA
+data$YdelseDatoStart[data$YdelseDatoStart == "NULL"] <- NA
+data$YdelseDatoStop[data$YdelseDatoStop == "NULL"] <- NA
 
 # 3.2 Korrekt variabeltype ------------------------------------------------
 glimpse(data$Halvår_DW) #Viser samtlige variables type. 
